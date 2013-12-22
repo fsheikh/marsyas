@@ -78,7 +78,7 @@
 // 2: SVM-based doubling
 #define POST_DOUBLING 1
 
-#define WRITE_INTERMEDIATE 0
+#define WRITE_INTERMEDIATE 1
 #define DISPLAY_SVM 1
 
 
@@ -1545,9 +1545,9 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
 
 #if POST_DOUBLING == 1
   if (heuristic_tempo <= 72.5) {
-    heuristic_tempo *= 2;
+    mult = 2.0;
   }
-  tempos(0) = heuristic_tempo;
+  tempos(0) = mult * heuristic_tempo;
 #endif
 
 #if POST_DOUBLING == 0
@@ -1564,7 +1564,8 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   // cout << tempos(0) << endl;
   ofs << tempos(0) << endl;
   ofs.close();
-  cout << "Estimated tempo = " << tempos(0) << endl;
+  cout << "Estimated tempo = " << tempos(0);
+  cout << "   (heuristic tempo " << heuristic_tempo << " BPM)" << endl;
 
 
   delete beatTracker;

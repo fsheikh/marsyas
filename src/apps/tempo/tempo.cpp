@@ -1058,7 +1058,7 @@ mrs_real energy_in_histo_range(realvec histo,
   return sum;
 }
 
-const int INFO_SIZE = 10;
+const int INFO_SIZE = 9;
 realvec info_histogram(mrs_natural bpm, realvec histo,
                        mrs_real factor, mrs_real tolerance)
 {
@@ -1105,6 +1105,7 @@ realvec info_histogram(mrs_natural bpm, realvec histo,
   }
 
   // number of values
+  /*
   mrs_natural num_non_zero = 0;
   for (int i=1; i < size-1; i++)
   {
@@ -1113,6 +1114,7 @@ realvec info_histogram(mrs_natural bpm, realvec histo,
       num_non_zero += 1;
     }
   }
+  */
 
 
   // energy over / under
@@ -1139,8 +1141,17 @@ realvec info_histogram(mrs_natural bpm, realvec histo,
   info(6) = 1.0 - (str05 + str10 + str20);
   info(7) = bpm2 / bpm;
   info(8) = bpm3 / bpm;
-  info(9) = num_non_zero;
+  //info(9) = num_non_zero;
   return info;
+}
+
+
+// formula from: http://stackoverflow.com/a/10848293
+mrs_real normal_pdf(mrs_real x, mrs_real m, mrs_real s)
+{
+    static const mrs_real inv_sqrt_2pi = 0.3989422804014327;
+    mrs_real a = (x - m) / s;
+    return inv_sqrt_2pi / s * std::exp(-0.5 * a * a);
 }
 
 
@@ -1208,16 +1219,18 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
 
 
   tempoInduction->addMarSystem(mng.create("AutoCorrelation", "acr"));
-  tempoInduction->addMarSystem(mng.create("BeatHistogram", "histo"));
+  //tempoInduction->addMarSystem(mng.create("BeatHistogram", "histo"));
 
 
   //  enhance the BH harmonic peaks
+  /*
   MarSystem* hfanout = mng.create("Fanout", "hfanout");
   hfanout->addMarSystem(mng.create("Gain", "id1"));
   hfanout->addMarSystem(mng.create("TimeStretch", "tsc1"));
   hfanout->addMarSystem(mng.create("TimeStretch", "tsc2"));
   tempoInduction->addMarSystem(hfanout);
   tempoInduction->addMarSystem(mng.create("Sum", "hsum"));
+  */
 
 #if 0
   tempoInduction->addMarSystem(mng.create("PlotSink", "plotsink_hbh"));
@@ -1245,13 +1258,17 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   mrs_real bwin_ms = 46.4; // 46.4;	 // for onset strength signal
   // mrs_natural bp_winSize = 8192; // for onset strength signal for the beat locations
   mrs_natural nCandidates = 10;  // number of tempo candidates
-  mrs_natural factor = 4;
+  //mrs_natural factor = 4;
 
   // parameters for BH pick peaking
   tempoInduction->updControl("Peaker/pkr1/mrs_natural/peakNeighbors", 2);
   tempoInduction->updControl("Peaker/pkr1/mrs_real/peakSpacing", 0.0);
-  tempoInduction->updControl("Peaker/pkr1/mrs_natural/peakStart", factor*MIN_BPM+1);
-  tempoInduction->updControl("Peaker/pkr1/mrs_natural/peakEnd", factor*MAX_BPM-1);
+  tempoInduction->updControl("Peaker/pkr1/mrs_natural/peakStart",
+    114);
+    //factor*MIN_BPM+1);
+  tempoInduction->updControl("Peaker/pkr1/mrs_natural/peakEnd",
+    518);
+    //factor*MAX_BPM-1);
   tempoInduction->updControl("MaxArgMax/mxr1/mrs_natural/interpolation", 0);
   tempoInduction->updControl("Peaker/pkr1/mrs_natural/interpolation", 0);
   beatTracker->updControl("FlowThru/tempoInduction/MaxArgMax/mxr1/mrs_natural/nMaximums", nCandidates);
@@ -1262,6 +1279,7 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   tempoInduction->updControl("AutoCorrelation/acr/mrs_bool/setr0to1", true);
 
   // beat histogram parameters
+  /*
   tempoInduction->updControl("BeatHistogram/histo/mrs_natural/startBin", 0);
   tempoInduction->updControl("BeatHistogram/histo/mrs_natural/endBin",
                              factor*MAX_BPM);
@@ -1271,6 +1289,7 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   tempoInduction->updControl("Fanout/hfanout/TimeStretch/tsc1/mrs_real/factor", 0.5);
   tempoInduction->updControl("Fanout/hfanout/TimeStretch/tsc2/mrs_real/factor", 0.25);
   tempoInduction->updControl("Fanout/hfanout/Gain/id1/mrs_real/gain", 1.0);
+*/
 
   // set the filename, hop and window size
   mrs_real srate = onset_strength->getControl("mrs_real/file_srate")->to<mrs_real>();
@@ -1296,7 +1315,8 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   // BeatPhase estimates a tempo based on rescoring the tempo candidates
   // of the tempo induction phase by cross-correlating pulse trains
   // with the onset strength signal
-  beatTracker->updControl("BeatPhase/beatphase/mrs_real/factor", (mrs_real)factor);
+  //beatTracker->updControl("BeatPhase/beatphase/mrs_real/factor", (mrs_real)factor);
+  beatTracker->updControl("BeatPhase/beatphase/mrs_real/factor", (mrs_real)1);
   beatTracker->updControl("BeatPhase/beatphase/mrs_natural/bhopSize", bhopSize);
   beatTracker->updControl("BeatPhase/beatphase/mrs_natural/bwinSize", bwinSize);
   beatTracker->updControl("BeatPhase/beatphase/mrs_natural/nCandidates", nCandidates);
@@ -1309,9 +1329,13 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   mrs_realvec temposcores(nCandidates);
 
   mrs_realvec bphase;	 // secondary beat histogram for selecting the best tempo estimate from BeatPhase
-  const int BPHASE_SIZE = MAX_BPM;
+  const int BPHASE_SIZE = 518;
   bphase.create(BPHASE_SIZE);
   bphase.setval(0.0);
+
+  // used for Gaussian (normal)-distributed beat phase
+  mrs_realvec bphase_add;
+  bphase_add.create(BPHASE_SIZE);
 
 
   // output plugin that can be used with MarMonitors for debugging
@@ -1345,8 +1369,7 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   }
 
   // reset anything needed for real processing
-  tempoInduction->updControl("BeatHistogram/histo/mrs_bool/reset", true);
-
+  //tempoInduction->updControl("BeatHistogram/histo/mrs_bool/reset", true);
 
 
 
@@ -1365,7 +1388,8 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
     mrs_realvec bh_candidates = beatTracker->getctrl("FlowThru/tempoInduction/MaxArgMax/mxr1/mrs_realvec/processedData")->to<mrs_realvec>();
     for (int k=0; k < nCandidates; k++)
     {
-      tempos(k) = bh_candidates(2*k+1) / factor;
+      //tempos(k) = bh_candidates(2*k+1) / factor;
+      tempos(k) = bh_candidates(2*k+1);
       if (k < nCandidates-1) {
         out_bh << setiosflags(ios::fixed) << std::setprecision(2) << tempos(k) << "  ";
       } else {
@@ -1377,20 +1401,31 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
     // store best score in bphase
     tempos = beatTracker->getControl("BeatPhase/beatphase/mrs_realvec/tempos")->to<mrs_realvec>();
     temposcores = beatTracker->getControl("BeatPhase/beatphase/mrs_realvec/tempo_scores")->to<mrs_realvec>();
-    mrs_natural bpm = tempos(0) + 0.5;
-    bphase(bpm) += temposcores(0);
+
+    
+    mrs_real bpm = tempos(0); // not quite an integer!
+    //mrs_natural bpm = tempos(0) + 0.5;
+    mrs_real beatstrength = temposcores(0);
+
+    // 2-sigma is 4% of BPM
+    //mrs_real std = bpm * 0.04 * 0.5;
+    mrs_real std = 10;
+    static const mrs_real sqrt_2pi = 2.5066282746310002;
+    mrs_real one_over_maxval = std * sqrt_2pi;
+    bphase_add.setval(0.0);
+    for (int i=0; i<BPHASE_SIZE; i++) {
+        mrs_real pdf = normal_pdf(i, bpm, std);
+        bphase_add(i) = pdf * one_over_maxval * beatstrength;
+    }
+    bphase = bphase + bphase_add;
+
+    //bphase_add.writeText("bphase_add.txt");
+    //exit(1);
+    //bphase(bpm) += temposcores(0);
 
 #if 0
     printf("%li\t%f\n", bpm, temposcores(0));
-//zz
 #endif
-    /*
-            if (ticks == (15+begin_tick_num)) {
-                cout<<tempos<<endl;
-                cout<<temposcores<<endl;
-                exit(1);
-            }
-    */
   }
 #if WRITE_INTERMEDIATE
   out_bh.close();
@@ -1429,6 +1464,10 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   for (int i=0; i<INFO_SIZE; i++) {
     features(i) = from_bp(i);
   }
+
+  // convert from periods to BPM
+  mrs_real oss_sr = srate / ((float) hopSize);
+  heuristic_tempo = 60.0 * oss_sr / heuristic_tempo;
 
   features(num_features - 2) = heuristic_tempo;
   features(num_features - 1) = ground_truth_tempo;

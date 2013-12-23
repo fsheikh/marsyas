@@ -76,7 +76,7 @@
 // 0: no doubling at all
 // 1: single threshold (bpm > x => double)
 // 2: SVM-based doubling
-#define POST_DOUBLING 2
+#define POST_DOUBLING 1
 
 #define WRITE_INTERMEDIATE 0
 #define DISPLAY_SVM 1
@@ -1223,14 +1223,12 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
 
 
   //  enhance the BH harmonic peaks
-  /*
   MarSystem* hfanout = mng.create("Fanout", "hfanout");
   hfanout->addMarSystem(mng.create("Gain", "id1"));
   hfanout->addMarSystem(mng.create("TimeStretch", "tsc1"));
   hfanout->addMarSystem(mng.create("TimeStretch", "tsc2"));
   tempoInduction->addMarSystem(hfanout);
   tempoInduction->addMarSystem(mng.create("Sum", "hsum"));
-  */
 
 #if 0
   tempoInduction->addMarSystem(mng.create("PlotSink", "plotsink_hbh"));
@@ -1286,10 +1284,10 @@ tempo_stem(mrs_string sfName, float ground_truth_tempo, mrs_string resName, bool
   tempoInduction->updControl("BeatHistogram/histo/mrs_real/factor", (mrs_real)factor);
   tempoInduction->updControl("BeatHistogram/histo/mrs_real/alpha", 0.0);
 
-  tempoInduction->updControl("Fanout/hfanout/TimeStretch/tsc1/mrs_real/factor", 0.5);
-  tempoInduction->updControl("Fanout/hfanout/TimeStretch/tsc2/mrs_real/factor", 0.25);
-  tempoInduction->updControl("Fanout/hfanout/Gain/id1/mrs_real/gain", 1.0);
 */
+  tempoInduction->updControl("Fanout/hfanout/TimeStretch/tsc1/mrs_real/factor", 2.0);
+  tempoInduction->updControl("Fanout/hfanout/TimeStretch/tsc2/mrs_real/factor", 4.0);
+  tempoInduction->updControl("Fanout/hfanout/Gain/id1/mrs_real/gain", 1.0);
 
   // set the filename, hop and window size
   mrs_real srate = onset_strength->getControl("mrs_real/file_srate")->to<mrs_real>();
